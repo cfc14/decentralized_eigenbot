@@ -1,0 +1,50 @@
+RUN INSTRUCTIONS 12/11/2020
+0) make sure that the terminal are using python2 for ROS reasons.
+E.g. comment out from .bashrc to move back to python2:
+export PATH=~/anaconda3/bin:$PATH
+1) Turn on robot and connect to it via wifi
+2) on host machine terminals set the ROS_IP and ROS_MASTER_URI 
+echo $ROS_MASTER_URI
+echo $ROS_IP
+export ROS_MASTER_URI=http://10.10.10.1:11311
+export ROS_IP=10.10.10.4
+2) roscore
+3) python scripts/description_listener.py
+4) if you want to see the rviz then 
+roslaunch eigenbot rviz_no_slider.launch
+5) if you change the topology, kill the script from (3) and restart it
+
+TODO Dec2020
+- listen constantly for topolgy messages. If the most recent 3 are the same, but different from the current one, then take that as the new design and restart.
+
+
+GENERAL 10/2020
+comment out from .bashrc to move back to python 2:
+export PATH=~/anaconda3/bin:$PATH
+
+
+RVIZ
+~/catkin_ws/src/eigenbot$ roslaunch eigenbot rviz_test.launch
+~/catkin_ws/src/eigenbot$ roslaunch eigenbot rviz_no_slider.launch
+Might need to set fixed frame in drop-down global options menu 
+
+
+RUN ORDER 9/10/2020
+
+python scripts/eigenbot_joystick_ros.py 
+then
+roslaunch eigenbot rviz_no_slider.launch
+
+
+10/18/2020
+
+How to check system env vars:
+echo $ROS_MASTER_URI
+echo $ROS_IP
+
+export ROS_MASTER_URI=http://10.10.10.1:11311
+export ROS_IP=10.10.10.4
+ssh ubuntu@10.10.10.1
+
+
+- noticed that eigenbody reports an index 0 child/port that comes before the legs. added this port to the module xml

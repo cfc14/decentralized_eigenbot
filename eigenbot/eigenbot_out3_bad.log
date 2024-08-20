@@ -1,0 +1,153 @@
+python scripts/description_listener.py
+pygame 1.9.6
+Hello from the pygame community. https://www.pygame.org/contribute.html
+pybullet build time: Sep  9 2020 17:00:17
+('module_ids:', [u'29', u'5B', u'B6', u'8E', u'00', u'C0', u'05', u'B9', u'5A', u'02', u'04', u'0C', u'79', u'03', u'E9', u'1D', u'66', u'BB', u'C6', u'B4', u'C7', u'42', u'F9', u'36', u'0B', u'01', u'53', u'88', u'47', u'C5', u'0A', u'C5'])
+('module_types:', [10, 10, 10, 10, 14, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 13, 13, 13, 13, 13, 13, 3, 3, 3, 3, 3, 10, 10, 3, 10])
+('module_orientations:', [0, 6, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 6, 6, 6, 6, 6, 6, 2, 2, 2, 2, 2, 0, 0, 2, 0])
+('module_children_ids:', [[u'FF', u'FF', u'FF'], [u'FF', u'FF', u'FF'], [u'FF', u'FF', u'FF'], [u'FF', u'FF', u'FF'], [u'C0', u'05', u'B9', u'5A', u'02', u'04', u'FF', u'FF'], [u'0C', u'FF', u'FF'], [u'79', u'FF', u'FF'], [u'03', u'FF', u'FF'], [u'E9', u'FF', u'FF'], [u'1D', u'FF', u'FF'], [u'66', u'FF', u'FF'], [u'BB', u'FF', u'FF'], [u'C6', u'FF', u'FF'], [u'B4', u'FF', u'FF'], [u'C7', u'FF', u'FF'], [u'42', u'FF', u'FF'], [u'F9', u'FF', u'FF'], [u'36', u'FF', u'FF'], [u'0B', u'FF', u'FF'], [u'0A', u'FF', u'FF'], [u'01', u'FF', u'FF'], [u'53', u'FF', u'FF'], [u'88', u'FF', u'FF'], [u'29', u'FF', u'FF'], [u'5B', u'FF', u'FF'], [u'B6', u'FF', u'FF'], [u'47', u'FF', u'FF'], [u'8E', u'FF', u'FF'], [u'FF', u'FF', u'FF'], [u'FF', u'FF', u'FF'], [u'C5', u'FF', u'FF'], [u'FF', u'FF', u'FF']])
+Module 0 children serials: [u'FF', u'FF', u'FF']
+Module 1 children serials: [u'FF', u'FF', u'FF']
+Module 2 children serials: [u'FF', u'FF', u'FF']
+Module 3 children serials: [u'FF', u'FF', u'FF']
+Module 4 children serials: [u'C0', u'05', u'B9', u'5A', u'02', u'04', u'FF', u'FF']
+Found module index 5 (id: C0 orn: 0) on port 0
+Found module index 6 (id: 05 orn: 0) on port 1
+Found module index 7 (id: B9 orn: 0) on port 2
+Found module index 8 (id: 5A orn: 0) on port 3
+Found module index 9 (id: 02 orn: 0) on port 4
+Found module index 10 (id: 04 orn: 0) on port 5
+Module 5 children serials: [u'0C', u'FF', u'FF']
+Found module index 11 (id: 0C orn: 2) on port 0
+Module 6 children serials: [u'79', u'FF', u'FF']
+Found module index 12 (id: 79 orn: 2) on port 0
+Module 7 children serials: [u'03', u'FF', u'FF']
+Found module index 13 (id: 03 orn: 2) on port 0
+Module 8 children serials: [u'E9', u'FF', u'FF']
+Found module index 14 (id: E9 orn: 2) on port 0
+Module 9 children serials: [u'1D', u'FF', u'FF']
+Found module index 15 (id: 1D orn: 2) on port 0
+Module 10 children serials: [u'66', u'FF', u'FF']
+Found module index 16 (id: 66 orn: 2) on port 0
+Module 11 children serials: [u'BB', u'FF', u'FF']
+Found module index 17 (id: BB orn: 6) on port 0
+Module 12 children serials: [u'C6', u'FF', u'FF']
+Found module index 18 (id: C6 orn: 6) on port 0
+Module 13 children serials: [u'B4', u'FF', u'FF']
+Found module index 19 (id: B4 orn: 6) on port 0
+Module 14 children serials: [u'C7', u'FF', u'FF']
+Found module index 20 (id: C7 orn: 6) on port 0
+Module 15 children serials: [u'42', u'FF', u'FF']
+Found module index 21 (id: 42 orn: 6) on port 0
+Module 16 children serials: [u'F9', u'FF', u'FF']
+Found module index 22 (id: F9 orn: 6) on port 0
+Module 17 children serials: [u'36', u'FF', u'FF']
+Found module index 23 (id: 36 orn: 2) on port 0
+Module 18 children serials: [u'0B', u'FF', u'FF']
+Found module index 24 (id: 0B orn: 2) on port 0
+Module 19 children serials: [u'0A', u'FF', u'FF']
+Found module index 30 (id: 0A orn: 2) on port 0
+Module 20 children serials: [u'01', u'FF', u'FF']
+Found module index 25 (id: 01 orn: 2) on port 0
+Module 21 children serials: [u'53', u'FF', u'FF']
+Found module index 26 (id: 53 orn: 2) on port 0
+Module 22 children serials: [u'88', u'FF', u'FF']
+Found module index 27 (id: 88 orn: 2) on port 0
+Module 23 children serials: [u'29', u'FF', u'FF']
+Found module index 0 (id: 29 orn: 0) on port 0
+Module 24 children serials: [u'5B', u'FF', u'FF']
+Found module index 1 (id: 5B orn: 6) on port 0
+Module 25 children serials: [u'B6', u'FF', u'FF']
+Found module index 2 (id: B6 orn: 0) on port 0
+Module 26 children serials: [u'47', u'FF', u'FF']
+Found module index 28 (id: 47 orn: 0) on port 0
+Module 27 children serials: [u'8E', u'FF', u'FF']
+Found module index 3 (id: 8E orn: 2) on port 0
+Module 28 children serials: [u'FF', u'FF', u'FF']
+Module 29 children serials: [u'FF', u'FF', u'FF']
+Module 30 children serials: [u'C5', u'FF', u'FF']
+Found module index 29 (id: C5 orn: 0) on port 0
+Module 31 children serials: [u'FF', u'FF', u'FF']
+['Foot_module', 'Foot_module', 'Foot_module', 'Foot_module', 'Eigenbody', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Static_90deg_module', 'Static_90deg_module', 'Static_90deg_module', 'Static_90deg_module', 'Static_90deg_module', 'Static_90deg_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Bendy_module', 'Foot_module', 'Foot_module', 'Bendy_module', 'Foot_module']
+edges:
+[[4, 5, 0, 0], [4, 6, 1, 0], [4, 7, 2, 0], [4, 8, 3, 0], [4, 9, 4, 0], [4, 10, 5, 0], [5, 11, 0, 2], [6, 12, 0, 2], [7, 13, 0, 2], [8, 14, 0, 2], [9, 15, 0, 2], [10, 16, 0, 2], [11, 17, 0, 6], [12, 18, 0, 6], [13, 19, 0, 6], [14, 20, 0, 6], [15, 21, 0, 6], [16, 22, 0, 6], [17, 23, 0, 2], [18, 24, 0, 2], [19, 30, 0, 2], [20, 25, 0, 2], [21, 26, 0, 2], [22, 27, 0, 2], [23, 0, 0, 0], [24, 1, 0, 6], [25, 2, 0, 0], [26, 28, 0, 0], [27, 3, 0, 2], [30, 29, 0, 0]]
+Logitech Logitech Dual Action
+Assembling with graph_nodes_serials=
+[u'29', u'5B', u'B6', u'8E', u'00', u'C0', u'05', u'B9', u'5A', u'02', u'04', u'0C', u'79', u'03', u'E9', u'1D', u'66', u'BB', u'C6', u'B4', u'C7', u'42', u'F9', u'36', u'0B', u'01', u'53', u'88', u'47', u'C5', u'0A', u'C5']
+eigenbot path:/home/cobracommander/catkin_ws/src/eigenbot
+file: foot_module.xacro, input port: foot_input_, Label: M0_S29
+file: foot_module.xacro, input port: foot_input_, Label: M1_S5B
+file: foot_module.xacro, input port: foot_input_, Label: M2_SB6
+file: foot_module.xacro, input port: foot_input_, Label: M3_S8E
+file: eigenbody.xacro, input port: eigenbody_, Label: M4_S00
+file: bendy_module.xacro, input port: bendy_input_, Label: M5_SC0
+file: bendy_module.xacro, input port: bendy_input_, Label: M6_S05
+file: bendy_module.xacro, input port: bendy_input_, Label: M7_SB9
+file: bendy_module.xacro, input port: bendy_input_, Label: M8_S5A
+file: bendy_module.xacro, input port: bendy_input_, Label: M9_S02
+file: bendy_module.xacro, input port: bendy_input_, Label: M10_S04
+file: bendy_module.xacro, input port: bendy_input_, Label: M11_S0C
+file: bendy_module.xacro, input port: bendy_input_, Label: M12_S79
+file: bendy_module.xacro, input port: bendy_input_, Label: M13_S03
+file: bendy_module.xacro, input port: bendy_input_, Label: M14_SE9
+file: bendy_module.xacro, input port: bendy_input_, Label: M15_S1D
+file: bendy_module.xacro, input port: bendy_input_, Label: M16_S66
+file: static_90deg_module.xacro, input port: static_elbow_, Label: M17_SBB
+file: static_90deg_module.xacro, input port: static_elbow_, Label: M18_SC6
+file: static_90deg_module.xacro, input port: static_elbow_, Label: M19_SB4
+file: static_90deg_module.xacro, input port: static_elbow_, Label: M20_SC7
+file: static_90deg_module.xacro, input port: static_elbow_, Label: M21_S42
+file: static_90deg_module.xacro, input port: static_elbow_, Label: M22_SF9
+file: bendy_module.xacro, input port: bendy_input_, Label: M23_S36
+file: bendy_module.xacro, input port: bendy_input_, Label: M24_S0B
+file: bendy_module.xacro, input port: bendy_input_, Label: M25_S01
+file: bendy_module.xacro, input port: bendy_input_, Label: M26_S53
+file: bendy_module.xacro, input port: bendy_input_, Label: M27_S88
+file: foot_module.xacro, input port: foot_input_, Label: M28_S47
+file: foot_module.xacro, input port: foot_input_, Label: M29_SC5
+file: bendy_module.xacro, input port: bendy_input_, Label: M30_S0A
+file: foot_module.xacro, input port: foot_input_, Label: M31_SC5
+attach bendy_input_M5_SC0 on eigenbody_M4_S00 at (-0.041 0.067 -0.13), (0 0 ${-M_PI/2})
+attach bendy_input_M6_S05 on eigenbody_M4_S00 at (-0.041 0.067 -0.04), (0 0 ${-M_PI/2})
+attach bendy_input_M7_SB9 on eigenbody_M4_S00 at (-0.041 0.067 0.05), (0 0 ${-M_PI/2})
+attach bendy_input_M8_S5A on eigenbody_M4_S00 at (-0.041 -0.067 0.05), (${M_PI} 0 ${M_PI/2})
+attach bendy_input_M9_S02 on eigenbody_M4_S00 at (-0.041 -0.067 -0.04), (${M_PI} 0 ${M_PI/2})
+attach bendy_input_M10_S04 on eigenbody_M4_S00 at (-0.041 -0.067 -0.13), (${M_PI} 0 ${M_PI/2})
+attach bendy_input_M11_S0C on bendy_output_M5_SC0 at (-0.036 0 0), (${6*M_PI/4} 0 0)
+attach bendy_input_M12_S79 on bendy_output_M6_S05 at (-0.036 0 0), (${6*M_PI/4} 0 0)
+attach bendy_input_M13_S03 on bendy_output_M7_SB9 at (-0.036 0 0), (${6*M_PI/4} 0 0)
+attach bendy_input_M14_SE9 on bendy_output_M8_S5A at (-0.036 0 0), (${6*M_PI/4} 0 0)
+attach bendy_input_M15_S1D on bendy_output_M9_S02 at (-0.036 0 0), (${6*M_PI/4} 0 0)
+attach bendy_input_M16_S66 on bendy_output_M10_S04 at (-0.036 0 0), (${6*M_PI/4} 0 0)
+attach static_elbow_M17_SBB on bendy_output_M11_S0C at (-0.036 0 0), (${2*M_PI/4} 0 0)
+attach static_elbow_M18_SC6 on bendy_output_M12_S79 at (-0.036 0 0), (${2*M_PI/4} 0 0)
+attach static_elbow_M19_SB4 on bendy_output_M13_S03 at (-0.036 0 0), (${2*M_PI/4} 0 0)
+attach static_elbow_M20_SC7 on bendy_output_M14_SE9 at (-0.036 0 0), (${2*M_PI/4} 0 0)
+attach static_elbow_M21_S42 on bendy_output_M15_S1D at (-0.036 0 0), (${2*M_PI/4} 0 0)
+attach static_elbow_M22_SF9 on bendy_output_M16_S66 at (-0.036 0 0), (${2*M_PI/4} 0 0)
+attach bendy_input_M23_S36 on static_elbow_M17_SBB at (-0.0455 -0.0375 0), (${6*M_PI/4} 0 ${2*M_PI/4})
+attach bendy_input_M24_S0B on static_elbow_M18_SC6 at (-0.0455 -0.0375 0), (${6*M_PI/4} 0 ${2*M_PI/4})
+attach bendy_input_M30_S0A on static_elbow_M19_SB4 at (-0.0455 -0.0375 0), (${6*M_PI/4} 0 ${2*M_PI/4})
+attach bendy_input_M25_S01 on static_elbow_M20_SC7 at (-0.0455 -0.0375 0), (${6*M_PI/4} 0 ${2*M_PI/4})
+attach bendy_input_M26_S53 on static_elbow_M21_S42 at (-0.0455 -0.0375 0), (${6*M_PI/4} 0 ${2*M_PI/4})
+attach bendy_input_M27_S88 on static_elbow_M22_SF9 at (-0.0455 -0.0375 0), (${6*M_PI/4} 0 ${2*M_PI/4})
+attach foot_input_M0_S29 on bendy_output_M23_S36 at (-0.036 0 0), (${4*M_PI/4} 0 0)
+attach foot_input_M1_S5B on bendy_output_M24_S0B at (-0.036 0 0), (${2*M_PI/4} 0 0)
+attach foot_input_M2_SB6 on bendy_output_M25_S01 at (-0.036 0 0), (${4*M_PI/4} 0 0)
+attach foot_input_M28_S47 on bendy_output_M26_S53 at (-0.036 0 0), (${4*M_PI/4} 0 0)
+attach foot_input_M3_S8E on bendy_output_M27_S88 at (-0.036 0 0), (${6*M_PI/4} 0 0)
+attach foot_input_M29_SC5 on bendy_output_M30_S0A at (-0.036 0 0), (${4*M_PI/4} 0 0)
+
+Joints found: ['bendy_joint_M5_SC0', 'bendy_joint_M6_S05', 'bendy_joint_M7_SB9', 'bendy_joint_M8_S5A', 'bendy_joint_M9_S02', 'bendy_joint_M10_S04', 'bendy_joint_M11_S0C', 'bendy_joint_M12_S79', 'bendy_joint_M13_S03', 'bendy_joint_M14_SE9', 'bendy_joint_M15_S1D', 'bendy_joint_M16_S66', 'bendy_joint_M23_S36', 'bendy_joint_M24_S0B', 'bendy_joint_M25_S01', 'bendy_joint_M26_S53', 'bendy_joint_M27_S88', 'bendy_joint_M30_S0A']
+Finding limb types...
+limb_types ['foot_limb', 'foot_limb', 'foot_limb', 'foot_limb', 'foot_limb', 'foot_limb']
+wheel_joint_ids [None, None, None, None, None, None]
+leg_joint_ids [[u'C0', u'0C', u'36'], [u'05', u'79', u'0B'], [u'B9', u'03', u'0A'], [u'5A', u'E9', u'01'], [u'02', u'1D', u'53'], [u'04', u'66', u'88']]
+leg_joint_orns [[0, 2, 2], [0, 2, 2], [0, 2, 2], [0, 2, 2], [0, 2, 2], [0, 2, 2]]
+leg_joint_orns_cumulative
+[array([ 0.        ,  1.57079633, -3.14159265]), array([ 0.        ,  1.57079633, -3.14159265]), array([ 0.        ,  1.57079633, -3.14159265]), array([ 0.        ,  1.57079633, -3.14159265]), array([ 0.        ,  1.57079633, -3.14159265]), array([ 0.        ,  1.57079633, -3.14159265])]
+leg_joint_multiplier 
+[[1, -1, -1], [1, -1, -1], [1, -1, -1], [1, -1, -1], [1, -1, -1], [1, -1, -1]]
+loading urdf...
+b3Warning[examples/Importers/ImportURDFDemo/BulletUrdfImporter.cpp,126]:
+URDF file with multiple root links found: eigenbody_M4_S00 foot_input_M31_SC5
