@@ -34,6 +34,7 @@ from warnings import WarningMessage
 import numpy as np
 import os
 
+
 from isaacgym.torch_utils import *
 from isaacgym import gymtorch, gymapi, gymutil
 
@@ -187,47 +188,119 @@ class LeggedRobot(BaseTask):
         if self.cfg.env.send_timeouts:
             self.extras["time_outs"] = self.time_out_buf
     
+    # def compute_reward(self):
+    #     """ Compute rewards
+    #         Calls each reward function which had a non-zero scale (processed in self._prepare_reward_function())
+    #         adds each terms to the episode sums and to the total reward
+    #     """
+    #     self.rew_buf[:] = 0.
+    #     for i in range(len(self.reward_functions)):
+    #         name = self.reward_names[i]
+    #         rew = self.reward_functions[i]() * self.reward_scales[name]
+    #         self.rew_buf += rew
+    #         self.episode_sums[name] += rew
+    #     if self.cfg.rewards.only_positive_rewards:
+    #         self.rew_buf[:] = torch.clip(self.rew_buf[:], min=0.)
+    #     # add termination reward after clipping
+    #     if "termination" in self.reward_scales:
+    #         rew = self._reward_termination() * self.reward_scales["termination"]
+    #         self.rew_buf += rew
+    #         self.episode_sums["termination"] += rew
+
     def compute_reward(self):
-        """ Compute rewards
-            Calls each reward function which had a non-zero scale (processed in self._prepare_reward_function())
-            adds each terms to the episode sums and to the total reward
+        """ Compute rewards for each agent.
+            Calls each reward function which had a non-zero scale (processed in self._prepare_reward_function()).
+            Adds each term to the episode sums and to the total reward.
         """
-        self.rew_buf[:] = 0.
+        # Ensure the reward buffer has the correct shape to store rewards for all agents in all environments
+        self.rew_buf[:] = 0.  # Reset the reward buffer to zero before computing rewards
+
+        # Iterate over each reward function
         for i in range(len(self.reward_functions)):
             name = self.reward_names[i]
-            rew = self.reward_functions[i]() * self.reward_scales[name]
-            self.rew_buf += rew
-            self.episode_sums[name] += rew
+            
+            # Compute rewards for all agents from this reward function
+            for agent_id in range(self.num_agents):
+                rew = self.reward_functions[i](agent_id) * self.reward_scales[name]  # Pass agent_id to compute reward for specific agent
+                self.rew_buf[:, agent_id] += rew  # Accumulate the reward for this agent
+                self.episode_sums[name] += rew
+
+        # Apply clipping if only positive rewards are allowed
         if self.cfg.rewards.only_positive_rewards:
             self.rew_buf[:] = torch.clip(self.rew_buf[:], min=0.)
-        # add termination reward after clipping
+
+        # Add termination reward after clipping, iterating per agent if needed
         if "termination" in self.reward_scales:
-            rew = self._reward_termination() * self.reward_scales["termination"]
-            self.rew_buf += rew
-            self.episode_sums["termination"] += rew
+            for agent_id in range(self.num_agents):
+                termination_rew = self._reward_termination(agent_id) * self.reward_scales["termination"]
+                self.rew_buf[:, agent_id] += termination_rew
+                self.episode_sums["termination"] += termination_rew
+
+
     
+    # def compute_observations(self):
+    #     """ Computes observations
+    #     """
+    #     self.obs_buf = torch.cat((  self.base_lin_vel * self.obs_scales.lin_vel,
+    #                                 self.base_ang_vel  * self.obs_scales.ang_vel,
+    #                                 self.projected_gravity,
+    #                                 self.commands[:, :3] * self.commands_scale,
+    #                                 (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
+    #                                 self.dof_vel * self.obs_scales.dof_vel,
+    #                                 self.actions
+    #                                 ),dim=-1)
+    #     # add perceptive inputs if not blind
+    #     if self.cfg.terrain.measure_heights:
+    #         heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1, 1.) * self.obs_scales.height_measurements
+    #         self.obs_buf = torch.cat((self.obs_buf, heights), dim=-1)
+    #     device = self.obs_buf.device  # Get the device of obs_buf
+    #     self.noise_scale_vec = self.noise_scale_vec.to(device)
+    #     # add noise if needed
+    #     if self.add_noise:
+    #     #     print(f"obs_buf shape: {self.obs_buf.shape}")
+    #     #     print(f"noise_scale_vec shape: {self.noise_scale_vec.shape}")
+    #         self.obs_buf += (2 * torch.rand_like(self.obs_buf) - 1) * self.noise_scale_vec
+
     def compute_observations(self):
-        """ Computes observations
-        """
-        self.obs_buf = torch.cat((  self.base_lin_vel * self.obs_scales.lin_vel,
-                                    self.base_ang_vel  * self.obs_scales.ang_vel,
-                                    self.projected_gravity,
-                                    self.commands[:, :3] * self.commands_scale,
-                                    (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
-                                    self.dof_vel * self.obs_scales.dof_vel,
-                                    self.actions
-                                    ),dim=-1)
-        # add perceptive inputs if not blind
-        if self.cfg.terrain.measure_heights:
-            heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1, 1.) * self.obs_scales.height_measurements
-            self.obs_buf = torch.cat((self.obs_buf, heights), dim=-1)
-        device = self.obs_buf.device  # Get the device of obs_buf
+        """ Computes observations for each agent. """
+        
+        # Initialize an empty list to store observations for each agent
+        agent_obs_list = []
+
+        for agent_id in range(self.num_agents):
+            # Compute observations for the current agent
+            agent_obs = torch.cat((
+                self.base_lin_vel[:, agent_id] * self.obs_scales.lin_vel,  # Linear velocity for this agent
+                self.base_ang_vel[:, agent_id] * self.obs_scales.ang_vel,  # Angular velocity for this agent
+                self.projected_gravity[:, agent_id],                       # Projected gravity for this agent
+                self.commands[:, agent_id, :3] * self.commands_scale,      # Command values for this agent
+                (self.dof_pos[:, agent_id] - self.default_dof_pos[:, agent_id]) * self.obs_scales.dof_pos,  # DOF positions
+                self.dof_vel[:, agent_id] * self.obs_scales.dof_vel,       # DOF velocities for this agent
+                self.actions[:, agent_id]                                  # Actions taken by this agent
+            ), dim=-1)
+
+            # Add perceptive inputs if the agent is not blind
+            if self.cfg.terrain.measure_heights:
+                heights = torch.clip(
+                    self.root_states[:, agent_id, 2].unsqueeze(1) - 0.5 - self.measured_heights[:, agent_id], 
+                    -1, 1.
+                ) * self.obs_scales.height_measurements
+                agent_obs = torch.cat((agent_obs, heights), dim=-1)
+
+            # Append the computed observation for this agent to the list
+            agent_obs_list.append(agent_obs)
+
+        # Combine observations from all agents in each environment
+        self.obs_buf = torch.stack(agent_obs_list, dim=1)  # Shape: (num_envs, num_agents, observation_dim)
+        
+        # Ensure the noise scale vector is on the same device as obs_buf
+        device = self.obs_buf.device
         self.noise_scale_vec = self.noise_scale_vec.to(device)
-        # add noise if needed
+        
+        # Add noise to the observations if needed
         if self.add_noise:
-        #     print(f"obs_buf shape: {self.obs_buf.shape}")
-        #     print(f"noise_scale_vec shape: {self.noise_scale_vec.shape}")
             self.obs_buf += (2 * torch.rand_like(self.obs_buf) - 1) * self.noise_scale_vec
+
 
     def create_sim(self):
         """ Creates simulation, terrain and evironments
@@ -331,6 +404,7 @@ class LeggedRobot(BaseTask):
         if self.cfg.commands.heading_command:
             forward = quat_apply(self.base_quat, self.forward_vec)
             heading = torch.atan2(forward[:, 1], forward[:, 0])
+            #heading=0 
             self.commands[:, 2] = torch.clip(0.5*wrap_to_pi(self.commands[:, 3] - heading), -1., 1.)
 
         if self.cfg.terrain.measure_heights:
@@ -338,21 +412,43 @@ class LeggedRobot(BaseTask):
         if self.cfg.domain_rand.push_robots and  (self.common_step_counter % self.cfg.domain_rand.push_interval == 0):
             self._push_robots()
 
+    # def _resample_commands(self, env_ids):
+    #     """ Randommly select commands of some environments
+
+    #     Args:
+    #         env_ids (List[int]): Environments ids for which new commands are needed
+    #     """
+    #     self.commands[env_ids, 0] = torch_rand_float(self.command_ranges["lin_vel_x"][0], self.command_ranges["lin_vel_x"][1], (len(env_ids), 1), device=self.device).squeeze(1)
+    #     #self.commands[env_ids, 1] = torch_rand_float(self.command_ranges["lin_vel_y"][0], self.command_ranges["lin_vel_y"][1], (len(env_ids), 1), device=self.device).squeeze(1)
+    #     self.commands[env_ids, 1] = torch_rand_float(0, 0, (len(env_ids), 1), device=self.device).squeeze(1)
+    #     if self.cfg.commands.heading_command:
+    #         self.commands[env_ids, 3] = torch_rand_float(self.command_ranges["heading"][0], self.command_ranges["heading"][1], (len(env_ids), 1), device=self.device).squeeze(1)
+    #     else:
+    #         self.commands[env_ids, 2] = torch_rand_float(self.command_ranges["ang_vel_yaw"][0], self.command_ranges["ang_vel_yaw"][1], (len(env_ids), 1), device=self.device).squeeze(1)
+
+    #     # set small commands to zero
+    #     self.commands[env_ids, :2] *= (torch.norm(self.commands[env_ids, :2], dim=1) > 0.2).unsqueeze(1)
     def _resample_commands(self, env_ids):
-        """ Randommly select commands of some environments
+    # Preserve linear velocities along the current heading
+        forward = quat_apply(self.base_quat, self.forward_vec)
+        heading = torch.atan2(forward[:, 1], forward[:, 0])
 
-        Args:
-            env_ids (List[int]): Environments ids for which new commands are needed
-        """
-        self.commands[env_ids, 0] = torch_rand_float(self.command_ranges["lin_vel_x"][0], self.command_ranges["lin_vel_x"][1], (len(env_ids), 1), device=self.device).squeeze(1)
-        self.commands[env_ids, 1] = torch_rand_float(self.command_ranges["lin_vel_y"][0], self.command_ranges["lin_vel_y"][1], (len(env_ids), 1), device=self.device).squeeze(1)
+    # Resample linear velocities (x and y) based on the current heading direction
+        lin_vel_mag = torch_rand_float(self.command_ranges["lin_vel_x"][0], self.command_ranges["lin_vel_x"][1], (len(env_ids), 1), device=self.device).squeeze(1)
+    
+    # Apply the heading direction to velocity components
+        self.commands[env_ids, 0] = lin_vel_mag * torch.cos(heading[env_ids])  # x component
+        self.commands[env_ids, 1] = lin_vel_mag * torch.sin(heading[env_ids])  # y component
+    
+    # Resample or adjust heading if required, ensuring the bot keeps going in the same direction
         if self.cfg.commands.heading_command:
-            self.commands[env_ids, 3] = torch_rand_float(self.command_ranges["heading"][0], self.command_ranges["heading"][1], (len(env_ids), 1), device=self.device).squeeze(1)
+            self.commands[env_ids, 3] = heading[env_ids]  # Keep heading as current heading
         else:
-            self.commands[env_ids, 2] = torch_rand_float(self.command_ranges["ang_vel_yaw"][0], self.command_ranges["ang_vel_yaw"][1], (len(env_ids), 1), device=self.device).squeeze(1)
+            self.commands[env_ids, 2] = torch.clip(0.5 * wrap_to_pi(self.commands[env_ids, 3] - heading[env_ids]), -1., 1.)
 
-        # set small commands to zero
+    # Set small velocity commands to zero
         self.commands[env_ids, :2] *= (torch.norm(self.commands[env_ids, :2], dim=1) > 0.2).unsqueeze(1)
+
 
     def _compute_torques(self, actions):
         """ Compute torques from actions.
@@ -533,6 +629,9 @@ class LeggedRobot(BaseTask):
         self.base_lin_vel = quat_rotate_inverse(self.base_quat, self.root_states[:, 7:10])
         self.base_ang_vel = quat_rotate_inverse(self.base_quat, self.root_states[:, 10:13])
         self.projected_gravity = quat_rotate_inverse(self.base_quat, self.gravity_vec)
+        # Add this to the constructor of the LeggedRobot class
+        self.leg_contact_time = torch.zeros(self.num_envs, len(self.feet_indices), device=self.device)
+
         if self.cfg.terrain.measure_heights:
             self.height_points = self._init_height_points()
         self.measured_heights = 0
@@ -833,6 +932,48 @@ class LeggedRobot(BaseTask):
         # Penalize z axis base linear velocity
         return torch.square(self.base_lin_vel[:, 2])
     
+    # def _reward_lin_vel_y(self):
+    #     # Penalize z axis base linear velocity
+    #     return torch.square(self.base_lin_vel[:, 1])
+    
+    def _reward_lin_vel_heading(self):
+        # Calculate forward direction
+        forward = quat_apply(self.base_quat, self.forward_vec)
+        
+        # Calculate heading angle
+        heading = torch.atan2(forward[:, 1], forward[:, 0])
+        
+        # Calculate the velocity in the direction of the heading
+        vel_direction = torch.atan2(self.base_lin_vel[:, 1], self.base_lin_vel[:, 0])
+        
+        # Reward for velocity alignment with heading
+        vel_alignment = torch.cos(heading - vel_direction)
+        
+        # Reward scaled by the magnitude of velocity in the direction of the heading
+        vel_magnitude = torch.norm(self.base_lin_vel[:, :2], dim=1)
+        reward = vel_alignment * vel_magnitude
+
+        return reward
+
+    # def _reward_lin_vel_heading(self):
+    # # Calculate forward direction
+    #     forward = quat_apply(self.base_quat, self.forward_vec)
+        
+    #     # Calculate heading angle
+    #     heading = torch.atan2(forward[:, 1], forward[:, 0])
+        
+    #     # Calculate the velocity in the direction of the heading
+    #     vel_direction = torch.atan2(self.base_lin_vel[:, 1], self.base_lin_vel[:, 0])
+        
+    #     # Reward for velocity alignment with heading
+    #     vel_alignment = torch.cos(heading - vel_direction)
+        
+    #     # Penalize misalignment (negative cos gives low reward for large angular difference)
+    #     return vel_alignment
+
+
+    
+    
     def _reward_ang_vel_xy(self):
         # Penalize xy axes base angular velocity
         return torch.sum(torch.square(self.base_ang_vel[:, :2]), dim=1)
@@ -907,6 +1048,75 @@ class LeggedRobot(BaseTask):
         rew_airTime *= torch.norm(self.commands[:, :2], dim=1) > 0.1 #no reward for zero command
         self.feet_air_time *= ~contact_filt
         return rew_airTime
+    # def _reward_three_feet_on_ground(self):
+    # # Reward for having exactly 3 feet on the ground
+    # # Need to filter the contacts because the contact reporting of PhysX is unreliable on meshes
+    #     contact = self.contact_forces[:, self.feet_indices, 2] > 1.
+    #     contact_filt = torch.logical_or(contact, self.last_contacts)
+    #     self.last_contacts = contact
+
+    # # Count the number of feet in contact with the ground
+    #     num_contacts = torch.sum(contact_filt, dim=1)
+
+    # # Reward if exactly 3 feet are in contact with the ground
+    #     rew_three_feet = (num_contacts == 3).float()
+
+    # # Add scaling to the reward based on the command's norm
+    #     rew_three_feet *= torch.norm(self.commands[:, :2], dim=1) > 0.1  # no reward for zero command
+
+    # # Reset air time for feet in contact
+    #     self.feet_air_time *= ~contact_filt
+
+    #     return rew_three_feet
+
+    def _reward_no_leg_dragging(self):
+        # Identify legs in contact with the ground
+        contact = self.contact_forces[:, self.feet_indices, 2] > 1.
+        contact_filt = torch.logical_or(contact, self.last_contacts)
+        self.last_contacts = contact
+
+        # Increment a "contact time" counter for each foot in contact
+        self.leg_contact_time += self.dt * contact_filt
+
+        # Penalize legs that have been dragging (in contact for too long, e.g., >1 second)
+        dragging_penalty = torch.sum((self.leg_contact_time > 1.0).float(), dim=1) * -1.0
+
+        # Reset the contact time for feet that are no longer in contact with the ground
+        self.leg_contact_time *= ~contact_filt
+
+        # Apply a scaling based on the command's norm (no penalty for zero movement commands)
+        dragging_penalty *= torch.norm(self.commands[:, :2], dim=1) > 0.1
+
+        return dragging_penalty
+
+    def _reward_no_leg_hovering(self):
+        # Identify legs in contact with the ground
+        contact = self.contact_forces[:, self.feet_indices, 2] > 1.
+        contact_filt = torch.logical_or(contact, self.last_contacts)
+        self.last_contacts = contact
+
+        # Increment a "contact time" counter for each foot in contact
+        self.leg_contact_time += self.dt * contact_filt
+
+       
+        # Penalize legs that are hovering (not in contact for too long, e.g., >0.5 seconds)
+        hover_time = self.dt * ~contact_filt
+        hovering_penalty = torch.sum((hover_time > 1.5).float(), dim=1) * -1.0
+
+        
+
+        # Reset the contact time for feet that are no longer in contact with the ground
+        self.leg_contact_time *= ~contact_filt
+
+        # Apply a scaling based on the command's norm (no penalty for zero movement commands)
+        total_penalty = (hovering_penalty) * (torch.norm(self.commands[:, :2], dim=1) > 0.1)
+
+        return total_penalty
+
+
+
+
+
     
     def _reward_stumble(self):
         # Penalize feet hitting vertical surfaces
@@ -920,3 +1130,7 @@ class LeggedRobot(BaseTask):
     def _reward_feet_contact_forces(self):
         # penalize high contact forces
         return torch.sum((torch.norm(self.contact_forces[:, self.feet_indices, :], dim=-1) -  self.cfg.rewards.max_contact_force).clip(min=0.), dim=1)
+#May want to include an energy term-emergence of stable gaits
+#feet air time
+#keep feet air time and train from scratch 
+#Remove the hovering and dragging reward-done

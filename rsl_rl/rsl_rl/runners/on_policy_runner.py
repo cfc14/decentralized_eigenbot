@@ -28,6 +28,8 @@
 #
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
+
+
 import time
 import os
 from collections import deque
@@ -81,16 +83,26 @@ class OnPolicyRunner:
         _, _ = self.env.reset()
     
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
-        # initialize writer
+        # Initialize logging if necessary
         if self.log_dir is not None and self.writer is None:
             self.writer = SummaryWriter(log_dir=self.log_dir, flush_secs=10)
+
         if init_at_random_ep_len:
             self.env.episode_length_buf = torch.randint_like(self.env.episode_length_buf, high=int(self.env.max_episode_length))
+
+        # Get initial observations
         obs = self.env.get_observations()
         privileged_obs = self.env.get_privileged_observations()
         critic_obs = privileged_obs if privileged_obs is not None else obs
+
         obs, critic_obs = obs.to(self.device), critic_obs.to(self.device)
-        self.alg.actor_critic.train() # switch to train mode (for dropout for example)
+
+        # Define agent-related parameters
+        num_agents = len(self.env.agents)  # Total number of agents (6 agents per environment)
+        num_actions_per_agent = 3         # Each agent controls 3 joints
+        obs_per_agent = torch.chunk(obs, num_agents, dim=-1)  # Split observations into chunks
+
+        self.alg.actor_critic.train()  # Switch to training mode
 
         ep_infos = []
         rewbuffer = deque(maxlen=100)
@@ -101,20 +113,48 @@ class OnPolicyRunner:
         tot_iter = self.current_learning_iteration + num_learning_iterations
         for it in range(self.current_learning_iteration, tot_iter):
             start = time.time()
-            # Rollout
+            # Rollout phase
             with torch.inference_mode():
-                for i in range(self.num_steps_per_env):
-                    actions = self.alg.act(obs, critic_obs)
-                    obs, privileged_obs, rewards, dones, infos = self.env.step(actions)
+                for step in range(self.num_steps_per_env):
+                    # Generate actions for each agent
+                    actions_per_agent = [
+                        self.alg.actor_critic.act(agent_obs) for agent_obs in obs_per_agent
+                    ]
+
+                    # Combine actions into a single tensor
+                    combined_actions = torch.cat(actions_per_agent, dim=-1)
+
+                    # Environment step
+                    obs, privileged_obs, rewards, dones, infos = self.env.step(combined_actions)
+
+                    # Update observations for the next step
                     critic_obs = privileged_obs if privileged_obs is not None else obs
-                    obs, critic_obs, rewards, dones = obs.to(self.device), critic_obs.to(self.device), rewards.to(self.device), dones.to(self.device)
+                    obs, critic_obs, rewards, dones = (
+                        obs.to(self.device),
+                        critic_obs.to(self.device),
+                        rewards.to(self.device),
+                        dones.to(self.device),
+                    )
+
+                    # Split observations again for next agent-specific processing
+                    obs_per_agent = torch.chunk(obs, num_agents, dim=-1)
+
+                    # Process rewards for each agent (each agent has its own reward)
+                    for agent_id in range(num_agents):
+                        # Get rewards for each agent in each environment
+                        agent_rewards = rewards[:, agent_id]
+
+                        # Pass the rewards to the respective agent's network
+                        self.alg.actor_critic.update(agent_id, agent_rewards)  # Update each agent's network
+
+                    # Update the algorithm with the environment step results
                     self.alg.process_env_step(rewards, dones, infos)
-                    
+
+                    # Logging and bookkeeping
                     if self.log_dir is not None:
-                        # Book keeping
                         if 'episode' in infos:
                             ep_infos.append(infos['episode'])
-                        cur_reward_sum += rewards
+                        cur_reward_sum += rewards.sum(dim=-1)  # Sum rewards for all agents in each environment
                         cur_episode_length += 1
                         new_ids = (dones > 0).nonzero(as_tuple=False)
                         rewbuffer.extend(cur_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
@@ -122,24 +162,27 @@ class OnPolicyRunner:
                         cur_reward_sum[new_ids] = 0
                         cur_episode_length[new_ids] = 0
 
-                stop = time.time()
-                collection_time = stop - start
+            stop = time.time()
+            collection_time = stop - start
 
-                # Learning step
-                start = stop
-                self.alg.compute_returns(critic_obs)
-            
+            # Learning phase
+            start = stop
+            self.alg.compute_returns(critic_obs)
             mean_value_loss, mean_surrogate_loss = self.alg.update()
             stop = time.time()
             learn_time = stop - start
+
+            # Logging and model saving
             if self.log_dir is not None:
                 self.log(locals())
             if it % self.save_interval == 0:
-                self.save(os.path.join(self.log_dir, 'model_{}.pt'.format(it)))
+                self.save(os.path.join(self.log_dir, f'model_{it}.pt'))
             ep_infos.clear()
-        
+
         self.current_learning_iteration += num_learning_iterations
-        self.save(os.path.join(self.log_dir, 'model_{}.pt'.format(self.current_learning_iteration)))
+        self.save(os.path.join(self.log_dir, f'model_{self.current_learning_iteration}.pt'))
+
+
 
     def log(self, locs, width=80, pad=35):
         self.tot_timesteps += self.num_steps_per_env * self.env.num_envs

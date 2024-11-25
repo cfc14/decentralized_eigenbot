@@ -1,3 +1,4 @@
+#later put the copyrights
 # SPDX-FileCopyrightText: Copyright (c) 2021 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 # 
@@ -37,53 +38,35 @@ from torch.nn.modules import rnn
 
 class ActorCritic(nn.Module):
     is_recurrent = False
-    def __init__(self,  num_actor_obs,
-                        num_critic_obs,
-                        num_actions,
-                        actor_hidden_dims=[256, 256, 256],
-                        critic_hidden_dims=[256, 256, 256],
-                        activation='elu',
-                        init_noise_std=1.0,
-                        **kwargs):
-        if kwargs:
-            print("ActorCritic.__init__ got unexpected arguments, which will be ignored: " + str([key for key in kwargs.keys()]))
+    def __init__(self, num_actor_obs, num_critic_obs, num_actions, num_agents=6, 
+                 actor_hidden_dims=[256, 256, 256], critic_hidden_dims=[256, 256, 256],
+                 activation='elu', init_noise_std=1.0, **kwargs):
         super(ActorCritic, self).__init__()
 
         activation = get_activation(activation)
+        self.num_agents = num_agents
 
-        mlp_input_dim_a = num_actor_obs
-        mlp_input_dim_c = num_critic_obs
+        # Create separate actor and critic models for each agent
+        self.actors = nn.ModuleList()
+        self.critics = nn.ModuleList()
+        
+        for _ in range(num_agents):
+            # Actor network
+            actor_layers = [nn.Linear(num_actor_obs, actor_hidden_dims[0]), activation]
+            for l in range(len(actor_hidden_dims) - 1):
+                actor_layers += [nn.Linear(actor_hidden_dims[l], actor_hidden_dims[l + 1]), activation]
+            actor_layers.append(nn.Linear(actor_hidden_dims[-1], num_actions))
+            self.actors.append(nn.Sequential(*actor_layers))
 
-        # Policy
-        actor_layers = []
-        actor_layers.append(nn.Linear(mlp_input_dim_a, actor_hidden_dims[0]))
-        actor_layers.append(activation)
-        for l in range(len(actor_hidden_dims)):
-            if l == len(actor_hidden_dims) - 1:
-                actor_layers.append(nn.Linear(actor_hidden_dims[l], num_actions))
-            else:
-                actor_layers.append(nn.Linear(actor_hidden_dims[l], actor_hidden_dims[l + 1]))
-                actor_layers.append(activation)
-        self.actor = nn.Sequential(*actor_layers)
+            # Critic network
+            critic_layers = [nn.Linear(num_critic_obs, critic_hidden_dims[0]), activation]
+            for l in range(len(critic_hidden_dims) - 1):
+                critic_layers += [nn.Linear(critic_hidden_dims[l], critic_hidden_dims[l + 1]), activation]
+            critic_layers.append(nn.Linear(critic_hidden_dims[-1], 1))
+            self.critics.append(nn.Sequential(*critic_layers))
 
-        # Value function
-        critic_layers = []
-        critic_layers.append(nn.Linear(mlp_input_dim_c, critic_hidden_dims[0]))
-        critic_layers.append(activation)
-        for l in range(len(critic_hidden_dims)):
-            if l == len(critic_hidden_dims) - 1:
-                critic_layers.append(nn.Linear(critic_hidden_dims[l], 1))
-            else:
-                critic_layers.append(nn.Linear(critic_hidden_dims[l], critic_hidden_dims[l + 1]))
-                critic_layers.append(activation)
-        self.critic = nn.Sequential(*critic_layers)
-
-        print(f"Actor MLP: {self.actor}")
-        print(f"Critic MLP: {self.critic}")
-
-        # Action noise
         self.std = nn.Parameter(init_noise_std * torch.ones(num_actions))
-        self.distribution = None
+
         # disable args validation for speedup
         Normal.set_default_validate_args = False
         
@@ -93,9 +76,115 @@ class ActorCritic(nn.Module):
 
     @staticmethod
     # not used at the moment
-    def init_weights(sequential, scales):
-        [torch.nn.init.orthogonal_(module.weight, gain=scales[idx]) for idx, module in
-         enumerate(mod for mod in sequential if isinstance(mod, nn.Linear))]
+    def update_distribution(self, observations):
+        self.distributions = [Normal(actor(obs), self.std) for actor, obs in zip(self.actors, observations)]
+
+    def act(self, observations):
+        # Ensure each observation goes to the correct actor
+        actions = []
+        for idx, (actor, obs) in enumerate(zip(self.actors, observations)):
+            # Use the idx-th actor to compute the action for the idx-th agent's observation
+            dist = Normal(actor(obs), self.std)
+            actions.append(dist.sample())
+        return torch.stack(actions)
+    # def evaluate(self, critic_observations):
+    #     # Ensure each observation goes to the correct critic
+    #     values = []
+    #     for idx, (critic, obs) in enumerate(zip(self.critics, critic_observations)):
+    #         # Use the idx-th critic to compute the value for the idx-th agent's observation
+    #         values.append(critic(obs))
+    #     return torch.stack(values)
+
+    # def init_weights(sequential, scales):
+    #     [torch.nn.init.orthogonal_(module.weight, gain=scales[idx]) for idx, module in
+    #      enumerate(mod for mod in sequential if isinstance(mod, nn.Linear))]
+    # def act(self, observations):
+    #     """
+    #     Compute actions for each agent in a multi-agent environment.
+        
+    #     Args:
+    #         observations (torch.Tensor): A tensor of shape (num_envs, num_agents, obs_dim) representing
+    #                                     the observations for each agent in each environment.
+        
+    #     Returns:
+    #         torch.Tensor: A tensor of shape (num_envs, num_agents, action_dim) containing the actions
+    #                     for each agent in each environment.
+    #     """
+    #     num_envs, num_agents, _ = observations.shape
+    #     actions = []
+
+    #     # Iterate over each agent
+    #     for agent_id in range(num_agents):
+    #         # Extract observations for the current agent across all environments
+    #         agent_obs = observations[:, agent_id, :]  # Shape: (num_envs, obs_dim)
+            
+    #         # Use the corresponding actor for this agent
+    #         actor = self.actors[agent_id]
+            
+    #         # Compute action distribution and sample actions
+    #         dist = Normal(actor(agent_obs), self.std)  # Shape: (num_envs, action_dim)
+    #         agent_actions = dist.sample()  # Shape: (num_envs, action_dim)
+            
+    #         # Store actions for the current agent
+    #         actions.append(agent_actions)
+        
+    #     # Stack actions to have a final shape of (num_envs, num_agents, action_dim)
+    #     return torch.stack(actions, dim=1)
+    def evaluate(self, critic_observations):
+        """
+        Compute value estimates for each agent in a multi-agent environment.
+        
+        Args:
+            critic_observations (torch.Tensor): A tensor of shape (num_envs, num_agents, obs_dim) representing
+                                                the critic observations for each agent in each environment.
+        
+        Returns:
+            torch.Tensor: A tensor of shape (num_envs, num_agents) containing the value estimates
+                        for each agent in each environment.
+        """
+        num_envs, num_agents, _ = critic_observations.shape
+        values = []
+
+        # Iterate over each agent
+        for agent_id in range(num_agents):
+            # Extract observations for the current agent across all environments
+            agent_obs = critic_observations[:, agent_id, :]  # Shape: (num_envs, obs_dim)
+            
+            # Use the corresponding critic for this agent
+            critic = self.critics[agent_id]
+            
+            # Compute the value estimate for the current agent
+            agent_values = critic(agent_obs).squeeze(-1)  # Shape: (num_envs)
+            
+            # Store values for the current agent
+            values.append(agent_values)
+        
+        # Stack values to have a final shape of (num_envs, num_agents)
+        return torch.stack(values, dim=1)
+    def init_weights(self, scales):
+        """
+        Initialize weights for multi-agent networks.
+        
+        Args:
+            scales (list): A list of gain scales for initializing the weights of the networks.
+                        It should have the same length as the number of agents.
+        """
+        for agent_id in range(self.num_agents):
+            actor = self.actors[agent_id]
+            critic = self.critics[agent_id]
+            
+            # Initialize actor network weights
+            for module in actor:
+                if isinstance(module, nn.Linear):
+                    torch.nn.init.orthogonal_(module.weight, gain=scales[agent_id])
+            
+            # Initialize critic network weights
+            for module in critic:
+                if isinstance(module, nn.Linear):
+                    torch.nn.init.orthogonal_(module.weight, gain=scales[agent_id])
+
+
+
 
 
     def reset(self, dones=None):
@@ -116,24 +205,12 @@ class ActorCritic(nn.Module):
     def entropy(self):
         return self.distribution.entropy().sum(dim=-1)
 
-    def update_distribution(self, observations):
-        mean = self.actor(observations)
-        self.distribution = Normal(mean, mean*0. + self.std)
-
-    def act(self, observations, **kwargs):
-        self.update_distribution(observations)
-        return self.distribution.sample()
-    
     def get_actions_log_prob(self, actions):
         return self.distribution.log_prob(actions).sum(dim=-1)
 
     def act_inference(self, observations):
         actions_mean = self.actor(observations)
         return actions_mean
-
-    def evaluate(self, critic_observations, **kwargs):
-        value = self.critic(critic_observations)
-        return value
 
 def get_activation(act_name):
     if act_name == "elu":

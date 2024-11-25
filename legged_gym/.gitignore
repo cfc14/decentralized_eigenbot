@@ -51,8 +51,8 @@ Thumbs.db
 # VS Code
 .vscode
 # logs
-logs
-runs
+#logs
+#runs
 
 # other
 *.egg-info
